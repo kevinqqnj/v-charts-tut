@@ -31,14 +31,14 @@
             <v-content>
                 <v-container fluid dark>
                      <v-layout row wrap>
-      <v-flex xs12 md8>
-          <v-card color="" class="text-xs-center text-center" id="pixi">
+      <v-flex xs12 md8 class="text-xs-center text-center" id="pixi">
+{#          <v-card color="" class="text-xs-center text-center" id="pixi">#}
         </v-card>
       </v-flex>
       <v-flex xs12 md4>
         <v-card color="success">
-          <v-btn color="" @click="click_bunny">Bigger</v-btn>
             <v-btn color="" @click="load_sudo">Load Sudo</v-btn>
+                      <v-btn color="" @click="solve_sudo">答 案</v-btn>
         </v-card>
           <br>
           <v-card color="info">
@@ -100,13 +100,35 @@
             this.info = 'Ready'
         },
         methods: {
+           async solve_sudo() {
+                this.info = 'Solving...'
+              try {
+                response = await axios.post('/solve', {
+                    puzzle: this.puzzle.toString()
+                }, {
+                    headers: { 'Content-Type': 'application/json; charset=UTF-8' }
+                })
+            } catch (error) {
+                alert(error.response + '，请刷新浏览器')
+            }
+            if (response.data.code === 'success') {
+                this.puzzle = response.data.result
+                this.load_sudo()
+                this.info = 'Solved!'
+            } else {
+                  alert(JSON.stringify(response.data.result))
+            }
+
+            {#console.log(response.data.result)#}
+            },
             load_sudo() {
-var style = new PIXI.TextStyle({
+                this.sprite.destroy()
+let style = new PIXI.TextStyle({
     fontFamily: 'Consolas',
     fontSize: 48,
     {#fontStyle: 'italic',#}
     fontWeight: 'bold',
-    fill: ['#ffffff', '#00ff99'], // gradient
+    fill: ['#f0f0ef', '#00ff99'], // gradient
     stroke: '#4a1850',
     strokeThickness: 5,
     dropShadow: true,
@@ -117,8 +139,18 @@ var style = new PIXI.TextStyle({
     {#wordWrap: true,#}
     {#wordWrapWidth: 440#}
 });
+                let style2 = new PIXI.TextStyle({
+    fontFamily: 'Consolas',
+    fontSize: 70,
+    {#fontStyle: 'italic',#}
+    {#fontWeight: 'bold',#}
+    fill: ['#f1d27d'],
+    stroke: '#4a1850',
+    strokeThickness: 1,
+
+});
 let sudotext = '', line = 0
-                let r_padding = (this.appWidth-40*2)/9
+                let r_padding = (this.app.screen.height)/9.2
                 this.puzzle.forEach((r, ind, arrary) => {
                     for (let c=0;c<10;c++){
                         sudotext = r[c]
@@ -126,8 +158,14 @@ let sudotext = '', line = 0
                         else line = 0
                         if (sudotext != 0) {
                             let richText = new PIXI.Text(sudotext, style);
-                            richText.x = 40 + c * r_padding;
-                            richText.y = 0 + ind * r_padding;
+                            richText.x = 65 + c * r_padding;
+                            richText.y = 10 + ind * r_padding;
+                            this.app.stage.addChild(richText);
+                        } else {
+                            sudotext = '□'
+                            let richText = new PIXI.Text(sudotext, style2);
+                            richText.x = 65 + c * r_padding-5;
+                            richText.y = 10 + ind * r_padding-5;
                             this.app.stage.addChild(richText);
                         }
                     }
@@ -138,6 +176,7 @@ let sudotext = '', line = 0
             reset_pixi() {
                 [this.app, this.sprite] = this.init_pixi()
                 this.info = 'Reset OK'
+                this.puzzle = []
             },
             click_bunny() {
                 this.sprite.scale.x *= 1.25;
@@ -161,9 +200,13 @@ app.stage.addChild(background);
 let graphics = new PIXI.Graphics();
 graphics.lineStyle(2, 0x808020, 1);
 graphics.beginFill(0xFF700B, 0.1);
-let r_padding = (this.appWidth/4*3)/12
-graphics.drawRect(40, 20, 40+r_padding*3, 20+r_padding*3);
-graphics.drawRect(40, 20+r_padding*6, 40+r_padding*3, 20+r_padding*8);
+let r_padding = (app.screen.height)/9.2
+graphics.drawRect(r_padding, 8, r_padding*3, r_padding*3);
+graphics.drawRect(r_padding*7, 8, r_padding*3, r_padding*3);
+graphics.drawRect(r_padding*4, 8+r_padding*3, r_padding*3, r_padding*3);
+graphics.drawRect(r_padding, 8+r_padding*6, r_padding*3, r_padding*3);
+graphics.drawRect(r_padding*7, 8+r_padding*6, r_padding*3, r_padding*3);
+{#graphics.drawRect(app.screen.width/2-r_padding, app.screen.height/2-r_padding, r_padding*3, r_padding*3);#}
 graphics.endFill();
 app.stage.addChild(graphics);
 
