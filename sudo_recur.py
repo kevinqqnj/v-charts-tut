@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.WARN,
 # format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)-7s %(message)s')
 logger = logging.getLogger(__name__)
 
+
 class Record:
     point = None  # 进行猜测的点
     point_index = 0  # 猜测候选列表使用的值的索引
@@ -168,7 +169,8 @@ class Sudo:
                                         # 判断移除后，是否剩下一个元素
                                         if len(item) == 1:
                                             self.new_points.put((row, col))
-                                            logger.debug(f'block compare row: answer={self.value[row, col]} at {(row, col)}')
+                                            logger.debug(
+                                                f'block compare row: answer={self.value[row, col]} at {(row, col)}')
                                             self.value[row, col] = item[0]
                                             return True
 
@@ -187,7 +189,8 @@ class Sudo:
                                         # 判断移除后，是否剩下一个元素
                                         if len(item) == 1:
                                             self.new_points.put((row, col))
-                                            logger.debug(f'block compare col: answer={self.value[row, col]} at {(row, col)}')
+                                            logger.debug(
+                                                f'block compare col: answer={self.value[row, col]} at {(row, col)}')
                                             self.value[row, col] = item[0]
                                             return True
 
@@ -313,7 +316,7 @@ class Sudo:
                 index = 0
                 items = self.add_to_queue(point, index)
                 logger.info(f'add to LIFO queue and guessing {items[index]}/{items}: '
-                             f'{[x.point for x in self.record_queue.queue]}')
+                            f'{[x.point for x in self.record_queue.queue]}')
                 self.guess_times += 1
                 return self.sudo_solve_iter()
         while True:

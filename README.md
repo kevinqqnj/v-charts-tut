@@ -1,4 +1,19 @@
-# V-Charts Tutorial
+# Sudo
+
+>Python3 + PixiJS + Flask
+
+Solve Sudoku quickly! less than 0.5s for hardest Sudo puzzle. :)
+
+## Features
+[ ] Input your own puzzle to solve 
+
+[ ] pull puzzle from web to solve 
+
+[ ] capture puzzle by Mobile Camera, then solve 
+
+
+
+---
 
 v-charts is wapper of echarts for Vue.js
 

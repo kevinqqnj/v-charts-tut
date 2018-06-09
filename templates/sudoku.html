@@ -4,253 +4,333 @@
 <head>
     <meta charset=utf-8>
     <title>Sudoku with Flask and PixiJS</title>
-   <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
-  <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
+    <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <link href=https://cdn.bootcss.com/material-design-icons/3.0.1/iconfont/material-icons.min.css rel=stylesheet>
 </head>
-
+<style>
+    .input-group {
+        padding: 0;
+    }
+</style>
 <body>
-    <div id="app">
-        <v-app>
-            <v-toolbar dark app>
-                <v-toolbar-title>数独 Sudoku</v-toolbar-title>
-                <v-spacer></v-spacer>
-                <v-toolbar-items>
-                    <v-menu open-on-hover bottom offset-y>
-                        <v-btn color="primary" slot="activator">Select task to run</v-btn>
-                        <v-list>
-                            <v-list-tile v-for="item in tasks" @click="run_task(item)">
-                                <v-list-tile-title v-text="item"></v-list-tile-title>
-                            </v-list-tile>
-                        </v-list>
-                    </v-menu>
-                    <v-btn @click.native="reset_pixi">Reset</v-btn>
-                </v-toolbar-items>
-            </v-toolbar>
-            <v-content>
-                <v-container fluid dark>
-                     <v-layout row wrap>
-      <v-flex xs12 md8 class="text-xs-center text-center" id="pixi">
-{#          <v-card color="" class="text-xs-center text-center" id="pixi">#}
-        </v-card>
-      </v-flex>
-      <v-flex xs12 md4>
-        <v-card color="success">
-            <v-btn color="" @click="load_sudo">Load Sudo</v-btn>
-                      <v-btn color="" @click="solve_sudo">答 案</v-btn>
-        </v-card>
-          <br>
-          <v-card color="info">
-          <v-card-text v-text="info"></v-card-text>
-        </v-card>
-      </v-flex>
-              </v-layout>
-                </v-container>
-            </v-content>
-            <v-footer :fixed="true" app>
-                <v-spacer></v-spacer>
-                <span>&copy;2018 kevinqqnj &nbsp;</span>
-            </v-footer>
-        </v-app>
-    </div>
-<script src="https://unpkg.com/vue/dist/vue.js"></script>
-  <script src="https://unpkg.com/vuetify/dist/vuetify.js"></script>
-    <script src="https://cdn.bootcss.com/axios/0.18.0/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
-    <script>
+<div id="app">
+    <v-app>
+        <v-toolbar dark app>
+            <v-toolbar-title>数独 Sudoku</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-toolbar-items>
+                <v-menu open-on-hover bottom offset-y>
+                    <v-btn color="primary" slot="activator">Sudo Levels</v-btn>
+                    <v-list>
+                        <v-list-tile v-for="item in levels" :key="item" @click="run_task(item)">
+                            <v-list-tile-title v-text="item"></v-list-tile-title>
+                        </v-list-tile>
+                    </v-list>
+                </v-menu>
+                <v-btn @click.native="reset_pixi">Reset</v-btn>
+            </v-toolbar-items>
+        </v-toolbar>
+        <v-content>
+            <v-container fluid dark>
+                <v-layout row wrap>
+                    <v-flex xs12 md8 class="text-xs-center text-center" id="pixi">
+                        {#          <v-card color="" class="text-xs-center text-center" id="pixi">#}
+                        </v-card>
+                    </v-flex>
+                    <v-flex xs12 md4>
+                        <v-card color="success">
+                            <v-btn color="" dark @click="load_sudo(0)">Hardest</v-btn>
+                            <v-btn color="error" @click="solve_sudo" :disabled="false">答 案</v-btn>
+                            <v-btn color="primary" dark @click.stop="inputDialog = true">Manual Input</v-btn>
+                        </v-card>
+                        <br>
+                        <v-card color="">
+                            <v-card-title>
+                                <div>Status:
+                                    <v-progress-circular v-show="loading" indeterminate
+                                                         color="amber"></v-progress-circular>
+                                    <br/>
+                                    <span class="grey--text" v-text="info"></span><br>
+                                    <br>
+                                    <v-divider></v-divider>
+                                    <br>
+                                    <span class="grey--text">手动输入时，每一行包含9个数字，未知数填0</span>
+                                    <br><br><br>
+
+                                    <a href="https://github.com/kevinqqnj/v-charts-tut.git">
+                                        <v-spacer></v-spacer>
+                                        2018 @kevinqqnj &nbsp;</a>
+                                </div>
+                            </v-card-title>
+                        </v-card>
+                    </v-flex>
+                </v-layout>
+            </v-container>
+        </v-content>
+        <v-dialog v-model="inputDialog" max-width="600px">
+            <v-card>
+{#                <v-card-title>Manual Input 共9x9数字</v-card-title>#}
+                <v-card-text>
+                    <v-card-actions v-for="row, ind in 9" :key="ind">
+                       <v-btn flat v-text="`Row ${ind+1}:`"></v-btn>
+                    <v-text-field v-model="mypuzzle[ind]"
+                                  mask="#-#-#-#-#-#-#-#-#"
+                                  required single-line
+                                  hint="每一行包含9个数字，空白处填0"
+{#                                  :label="`Row ${ind+1}:`"#}
+                    ></v-text-field>
+                    </v-card-actions>
+                </v-card-text>
+                <v-card-actions>
+                    <v-layout row justify-space-between>
+                        <v-btn color="error"  @click.stop="inputDialog=false">Cancel</v-btn>
+                        <v-btn color="primary" @click="input_puzzle">我填完了</v-btn>
+                    </v-layout>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </v-app>
+</div>
+<script src="https://cdn.bootcss.com/vue/2.5.16/vue.js"></script>
+<script src="https://unpkg.com/vuetify/dist/vuetify.js"></script>
+<script src="https://cdn.bootcss.com/axios/0.18.0/axios.min.js"></script>
+<script src="https://cdn.bootcss.com/pixi.js/4.8.0/pixi.min.js"></script>
+<script>
     var vm = new Vue({
         el: '#app',
         data: () => ({
-            appWidth: 600,
-            tasks: ['Short task', 'Long task', 'Task with error'],
+            mypuzzle: [[], [], [], [], [], [], [], [], []],
+            appWidth: 0,
+            inputDialog: false,
+            levels: ['Easy', 'Medium', 'Hard', 'Nightmare'],
             pagination: {
                 sortBy: 'start_time',
                 descending: true,
             },
             loading: false,
             headers: [{
-                    text: 'Task name',
-                    align: 'left',
-                    value: 'name'
-                },
-                { text: 'Job Id', value: 'job_id' },
-                { text: 'Status', value: 'status' },
-                { text: 'Result', value: 'result' },
-                { text: 'Start time', value: 'start_time' },
-                { text: 'Finish time', value: 'finish_time' },
+                text: 'Task name',
+                align: 'left',
+                value: 'name'
+            },
+                {text: 'Job Id', value: 'job_id'},
+                {text: 'Status', value: 'status'},
+                {text: 'Result', value: 'result'},
+                {text: 'Start time', value: 'start_time'},
+                {text: 'Finish time', value: 'finish_time'},
             ],
             items: [],
             app: null,
             sprite: null,
-            info:'ready',
-            puzzle:
-[[8,0,0,0,0,0,0,0,0],
- [0,0,3,6,0,0,0,0,0],
- [0,7,0,0,9,0,2,0,0],
- [0,5,0,0,0,7,0,0,0],
- [0,0,0,0,4,5,7,0,0],
- [0,0,0,1,0,0,0,3,0],
- [0,0,1,0,0,0,0,6,8],
- [0,0,8,5,0,0,0,1,0],
- [0,9,0,0,0,0,4,0,0]],
+            info: 'ready',
+            puzzle0:
+                [[8, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 3, 6, 0, 0, 0, 0, 0],
+                    [0, 7, 0, 0, 9, 0, 2, 0, 0],
+                    [0, 5, 0, 0, 0, 7, 0, 0, 0],
+                    [0, 0, 0, 0, 4, 5, 7, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 3, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 6, 8],
+                    [0, 0, 8, 5, 0, 0, 0, 1, 0],
+                    [0, 9, 0, 0, 0, 0, 4, 0, 0]],
+            puzzle: [],
         }),
         mounted() {
             [this.app, this.sprite] = this.init_pixi();
             this.info = 'Ready'
+            this.puzzle = JSON.parse(JSON.stringify(this.puzzle0))
         },
+        {#computed: {#}
+        {#  can_submit() {#}
+        {#      for (let i = 0; i < 10; i++) {#}
+        {#          if (this.puzzle[i].length < 9) {#}
+        {#              return false#}
+        {#          }#}
+        {#      }#}
+        {#      return true#}
+        {#  }#}
+        {#{,#}
         methods: {
-           async solve_sudo() {
-                this.info = 'Solving...'
-              try {
-                response = await axios.post('/solve', {
-                    puzzle: this.puzzle.toString()
-                }, {
-                    headers: { 'Content-Type': 'application/json; charset=UTF-8' }
-                })
-            } catch (error) {
-                alert(error.response + '，请刷新浏览器')
-            }
-            if (response.data.code === 'success') {
-                this.puzzle = response.data.result
-                this.load_sudo()
-                this.info = 'Solved!'
-            } else {
-                  alert(JSON.stringify(response.data.result))
-            }
-
-            {#console.log(response.data.result)#}
+            input_puzzle() {
+                this.puzzle = this.mypuzzle
+                for (let i = 0; i < 10; i++) {
+                    if (this.mypuzzle[i].length < 9) {
+                        alert(`第${i + 1}行没有填完整！Check row ${i + 1}`)
+                        return this.load_sudo(-1)
+                    }
+                }
+                console.log(this.mypuzzle)
+                inputDialog = false
+                this.load_sudo(-1)
             },
-            load_sudo() {
-                this.sprite.destroy()
-let style = new PIXI.TextStyle({
-    fontFamily: 'Consolas',
-    fontSize: 48,
-    {#fontStyle: 'italic',#}
-    fontWeight: 'bold',
-    fill: ['#f0f0ef', '#00ff99'], // gradient
-    stroke: '#4a1850',
-    strokeThickness: 5,
-    dropShadow: true,
-    dropShadowColor: '#000000',
-    dropShadowBlur: 4,
-    dropShadowAngle: Math.PI / 6,
-    dropShadowDistance: 6,
-    {#wordWrap: true,#}
-    {#wordWrapWidth: 440#}
-});
-                let style2 = new PIXI.TextStyle({
-    fontFamily: 'Consolas',
-    fontSize: 70,
-    {#fontStyle: 'italic',#}
-    {#fontWeight: 'bold',#}
-    fill: ['#f1d27d'],
-    stroke: '#4a1850',
-    strokeThickness: 1,
+            async solve_sudo() {
+                this.info = 'Solving...'
+                this.loading = true
+                try {
+                    response = await
+                        axios.post('/solve', {
+                            puzzle: this.puzzle.toString()
+                        }, {
+                            headers: {'Content-Type': 'application/json; charset=UTF-8'}
+                        })
+                } catch (error) {
+                    this.loading = false
+                    alert(JSON.stringify(response.data) + '，请检查题目！')
+                }
+                this.loading = false
+                if (response.data.code === 'success') {
+                    this.puzzle = response.data.result
+                    this.load_sudo(-1)
+                    this.info = 'Solved!'
+                } else {
+                    this.info = 'Soduku is wrong!'
+                    alert(JSON.stringify(response.data.result))
+                }
 
-});
-let sudotext = '', line = 0
-                let r_padding = (this.app.screen.height)/9.2
+                {#console.log(response.data.result)#}
+            }
+            ,
+            load_sudo(id) {
+                if (id == 0) this.puzzle = this.puzzle0
+                this.sprite.destroy()
+                let style = new PIXI.TextStyle({
+                    fontFamily: 'Consolas',
+                    fontSize: 48 * (this.app.screen.height) / 520,
+                    {#fontStyle: 'italic',#}
+                    fontWeight: 'bold',
+                    fill: ['#f0f0ef', '#00ff99'], // gradient
+                    stroke: '#4a1850',
+                    strokeThickness: 5 * (this.app.screen.height) / 520,
+                    dropShadow: true,
+                    dropShadowColor: '#000000',
+                    dropShadowBlur: 4 * (this.app.screen.height) / 520,
+                    dropShadowAngle: Math.PI / 6,
+                    dropShadowDistance: 6 * (this.app.screen.height) / 520,
+                    {#wordWrap: true,#}
+                    {#wordWrapWidth: 440#}
+                });
+                let style2 = new PIXI.TextStyle({
+                    fontFamily: 'Consolas',
+                    fontSize: 80 * (this.app.screen.height) / 520,
+                    {#fontStyle: 'italic',#}
+                    {#fontWeight: 'bold',#}
+                    fill: ['#f1d27d'],
+                    stroke: '#4a1850',
+                    strokeThickness: 1,
+
+                });
+                let sudotext = '', line = 0
+                let r_padding = (this.app.screen.height) / 9.2
+                let start_x = 65 * (this.app.screen.height) / 520
+                let start_y = 10
                 this.puzzle.forEach((r, ind, arrary) => {
-                    for (let c=0;c<10;c++){
+                    for (let c = 0; c < 10; c++) {
                         sudotext = r[c]
-                        if (c%3==0) line = 20
+                        if (c % 3 == 0) line = 20
                         else line = 0
                         if (sudotext != 0) {
                             let richText = new PIXI.Text(sudotext, style);
-                            richText.x = 65 + c * r_padding;
-                            richText.y = 10 + ind * r_padding;
+                            richText.x = start_x + c * r_padding;
+                            richText.y = start_y + ind * r_padding;
                             this.app.stage.addChild(richText);
                         } else {
                             sudotext = '□'
                             let richText = new PIXI.Text(sudotext, style2);
-                            richText.x = 65 + c * r_padding-5;
-                            richText.y = 10 + ind * r_padding-5;
+                            richText.x = start_x + c * r_padding - 5;
+                            richText.y = start_y + ind * r_padding - 15;
                             this.app.stage.addChild(richText);
                         }
                     }
-                } )
+                })
 
 
-            },
+            }
+            ,
             reset_pixi() {
                 [this.app, this.sprite] = this.init_pixi()
                 this.info = 'Reset OK'
                 this.puzzle = []
-            },
+            }
+            ,
             click_bunny() {
                 this.sprite.scale.x *= 1.25;
                 this.info = 'Bunny clicked'
-            },
+            }
+            ,
             init_pixi() {
                 let app_e = document.getElementById('pixi')
-                app_e.innerHTML=""
+                app_e.innerHTML = ""
                 this.appWidth = Math.min(700, app_e.offsetWidth)
-                let app = new PIXI.Application(this.appWidth, this.appWidth/4*3,{backgroundColor: 0x1099bb });
+                let app = new PIXI.Application(this.appWidth, this.appWidth / 4 * 3, {backgroundColor: 0x1099bb});
                 app_e.appendChild(app.view);
 
 // Scale mode for all textures, will retain pixelation
-PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-var background = new PIXI.Sprite.fromImage('/static/tile.png');
-background.width = 800;
-background.height = 600;
-app.stage.addChild(background);
+                PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+                var background = new PIXI.Sprite.fromImage('/static/tile.png');
+                background.width = 800;
+                background.height = 600;
+                app.stage.addChild(background);
 
 // draw grid
-let graphics = new PIXI.Graphics();
-graphics.lineStyle(2, 0x808020, 1);
-graphics.beginFill(0xFF700B, 0.1);
-let r_padding = (app.screen.height)/9.2
-graphics.drawRect(r_padding, 8, r_padding*3, r_padding*3);
-graphics.drawRect(r_padding*7, 8, r_padding*3, r_padding*3);
-graphics.drawRect(r_padding*4, 8+r_padding*3, r_padding*3, r_padding*3);
-graphics.drawRect(r_padding, 8+r_padding*6, r_padding*3, r_padding*3);
-graphics.drawRect(r_padding*7, 8+r_padding*6, r_padding*3, r_padding*3);
-{#graphics.drawRect(app.screen.width/2-r_padding, app.screen.height/2-r_padding, r_padding*3, r_padding*3);#}
-graphics.endFill();
-app.stage.addChild(graphics);
+                let graphics = new PIXI.Graphics();
+                graphics.lineStyle(2, 0x808020, 1);
+                graphics.beginFill(0xFF700B, 0.1);
+                let r_padding = (app.screen.height) / 9.2
+                graphics.drawRect(r_padding, 8, r_padding * 3, r_padding * 3);
+                graphics.drawRect(r_padding * 7, 8, r_padding * 3, r_padding * 3);
+                graphics.drawRect(r_padding * 4, 8 + r_padding * 3, r_padding * 3, r_padding * 3);
+                graphics.drawRect(r_padding, 8 + r_padding * 6, r_padding * 3, r_padding * 3);
+                graphics.drawRect(r_padding * 7, 8 + r_padding * 6, r_padding * 3, r_padding * 3);
+                {#graphics.drawRect(app.screen.width/2-r_padding, app.screen.height/2-r_padding, r_padding*3, r_padding*3);#}
+                graphics.endFill();
+                app.stage.addChild(graphics);
 
-let sprite = PIXI.Sprite.fromImage('/static/bunny.png');
+                let sprite = PIXI.Sprite.fromImage('/static/bunny.png');
 
 // Set the initial position
-sprite.anchor.set(0.5);
-sprite.x = app.screen.width / 2;
-sprite.y = app.screen.height / 2;
+                sprite.anchor.set(0.5);
+                sprite.x = app.screen.width / 2;
+                sprite.y = app.screen.height / 2;
 
 // Opt-in to interactivity
-sprite.interactive = true;
+                sprite.interactive = true;
 
 // Shows hand cursor
-sprite.buttonMode = true;
+                sprite.buttonMode = true;
 
 // Pointers normalize touch and mouse
-sprite.on('pointerdown', onClick);
+                sprite.on('pointerdown', onClick);
 
 // Alternatively, use the mouse & touch events:
 // sprite.on('click', onClick); // mouse-only
 // sprite.on('tap', onClick); // touch-only
 
-app.stage.addChild(sprite);
+                app.stage.addChild(sprite);
 
-function onClick () {
-    sprite.scale.x *= 1.25;
-    sprite.scale.y *= 1.25;
-}
-return [app, sprite]
-            },
+                function onClick() {
+                    sprite.scale.x *= 1.25;
+                    sprite.scale.y *= 1.25;
+                }
+
+                return [app, sprite]
+            }
+            ,
             reset_table() {
                 this.items.splice(0) // splice will trigger vue refresh
                 return axios.get('/reset')
                     .then((response) => {
                         console.log('reset success')
                     })
-                    .catch(function(error) {
+                    .catch(function (error) {
                         console.log(error);
                     });
-            },
+            }
+            ,
         },
     })
-    </script>
+</script>
 </body>
 
 </html>
