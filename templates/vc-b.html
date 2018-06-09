@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>v-charts</title>
+</head>
+<body>
+<h2 align="center">Sudoku</h2>
+  <div id="app">
+    <ve-heatmap :data="chartData" :visual-map="chartVisualMap" :grid="chartGrid" :extend="extend"></ve-heatmap>
+
+
+  </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/numerify/lib/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/v-charts/lib/index.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/v-charts/lib/style.min.css">
+  <script>
+    new Vue({
+      el: '#app',
+      data: ()=> ({
+       chartGrid: {
+        {#height: 500#}
+      },
+          extend: {
+        series: {
+          label: { // http://echarts.baidu.com/option.html#series-heatmap.label.fontSize
+            normal: {
+              show: true, fontSize: 20, fontWeight: 'bold',
+            }
+          }
+        }
+      },
+      chartVisualMap: {
+           xAxisList: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          yAxisList: ['A','B','C','D','E','F','G','H','I'],
+        splitNumber: 1,
+        min: 1,
+        max: 9,
+        type: 'piecewise',
+        right: 0,
+        top: '50%',
+          digit: 0,
+          categories: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          metrics: '初始值',
+      },
+        chartData: {
+          columns: ['col', 'row', '初始值',], // 可能值，当前猜测，
+          rows: [
+            { 'col': '1', 'row': 'A', '初始值': 1 },
+            { 'col': '1', 'row': 'B', '初始值': 4 },
+            { 'col': '1', 'row': 'C', '初始值': 8 },
+            { 'col': '1', 'row': 'I', '初始值': 2 },
+            { 'col': '1', 'row': 'E', '初始值': 1 },
+            { 'col': '1', 'row': 'F', '初始值': '', 'possible': [1,3,4] },
+            {#{ 'col': '1', 'row': 'G', '初始值': 8 },#}
+            {#{ 'col': '1', 'row': 'H', '初始值': 7 },#}
+            {#{ 'col': '1', 'row': 'I', '初始值': 2 },#}
+            {#{ 'col': '1', 'row': 'A', '初始值': 3 },#}
+            {#{ 'col': '2', 'row': 'B', '初始值': 0 },#}
+            {#{ 'col': '3', 'row': 'C', '初始值': 1 },#}
+            { 'col': '4', 'row': 'D', '初始值': 6 },
+            { 'col': '5', 'row': 'E', '初始值': 8 },
+            { 'col': '6', 'row': 'F', '初始值': 1 },
+            { 'col': '7', 'row': 'G', '初始值': 8 },
+            { 'col': '8', 'row': 'H', '初始值': 9 },
+            { 'col': '9', 'row': 'I', '初始值': 2 },
+          ]
+        },
+      })
+    })
+  </script>
+</body>
+</html>
