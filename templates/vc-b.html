@@ -8,7 +8,15 @@
   <div id="app">
     <ve-heatmap :data="chartData" :visual-map="chartVisualMap" :grid="chartGrid" :extend="extend"></ve-heatmap>
 
-
+<table border="1">
+  <tr>
+    <th v-for="c in 10" v-text="c-1"></th>
+  </tr>
+  <tr v-for="r,index in yAxisList">
+    <td v-text="r"></td>
+    <td v-for="c in puzzle[index]" v-text="c"></td>
+  </tr>
+</table>
   </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
@@ -32,9 +40,10 @@
           }
         }
       },
+          yAxisList: ['A','B','C','D','E','F','G','H','I'],
       chartVisualMap: {
            xAxisList: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-          yAxisList: ['A','B','C','D','E','F','G','H','I'],
+          yAxisList: this.yAxisList,
         splitNumber: 1,
         min: 1,
         max: 9,
@@ -68,6 +77,16 @@
             { 'col': '9', 'row': 'I', '初始值': 2 },
           ]
         },
+          puzzle:
+[[8,0,0,0,0,0,0,0,0],
+ [0,0,3,6,0,0,0,0,0],
+ [0,7,0,0,9,0,2,0,0],
+ [0,5,0,0,0,7,0,0,0],
+ [0,0,0,0,4,5,7,0,0],
+ [0,0,0,1,0,0,0,3,0],
+ [0,0,1,0,0,0,0,6,8],
+ [0,0,8,5,0,0,0,1,0],
+ [0,9,0,0,0,0,4,0,0]],
       })
     })
   </script>

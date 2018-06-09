@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8>
+    <title>Sudoku with Flask and PixiJS</title>
+   <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
+  <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link href=https://cdn.bootcss.com/material-design-icons/3.0.1/iconfont/material-icons.min.css rel=stylesheet>
+</head>
+
+<body>
+    <div id="app">
+        <v-app>
+            <v-toolbar dark app>
+                <v-toolbar-title>数独 Sudoku</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-toolbar-items>
+                    <v-menu open-on-hover bottom offset-y>
+                        <v-btn color="primary" slot="activator">Select task to run</v-btn>
+                        <v-list>
+                            <v-list-tile v-for="item in tasks" @click="run_task(item)">
+                                <v-list-tile-title v-text="item"></v-list-tile-title>
+                            </v-list-tile>
+                        </v-list>
+                    </v-menu>
+                    <v-btn @click.native="reset_pixi">Reset</v-btn>
+                </v-toolbar-items>
+            </v-toolbar>
+            <v-content>
+                <v-container fluid dark>
+                     <v-layout row wrap>
+      <v-flex xs12 md8>
+          <v-card color="" class="text-xs-center text-center" id="pixi">
+        </v-card>
+      </v-flex>
+      <v-flex xs12 md4>
+        <v-card color="success">
+          <v-btn color="" @click="click_bunny">Bigger</v-btn>
+            <v-btn color="" @click="load_sudo">Load Sudo</v-btn>
+        </v-card>
+          <br>
+          <v-card color="info">
+          <v-card-text v-text="info"></v-card-text>
+        </v-card>
+      </v-flex>
+              </v-layout>
+                </v-container>
+            </v-content>
+            <v-footer :fixed="true" app>
+                <v-spacer></v-spacer>
+                <span>&copy;2018 kevinqqnj &nbsp;</span>
+            </v-footer>
+        </v-app>
+    </div>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/vuetify/dist/vuetify.js"></script>
+    <script src="https://cdn.bootcss.com/axios/0.18.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
+    <script>
+    var vm = new Vue({
+        el: '#app',
+        data: () => ({
+            appWidth: 600,
+            tasks: ['Short task', 'Long task', 'Task with error'],
+            pagination: {
+                sortBy: 'start_time',
+                descending: true,
+            },
+            loading: false,
+            headers: [{
+                    text: 'Task name',
+                    align: 'left',
+                    value: 'name'
+                },
+                { text: 'Job Id', value: 'job_id' },
+                { text: 'Status', value: 'status' },
+                { text: 'Result', value: 'result' },
+                { text: 'Start time', value: 'start_time' },
+                { text: 'Finish time', value: 'finish_time' },
+            ],
+            items: [],
+            app: null,
+            sprite: null,
+            info:'ready',
+            puzzle:
+[[8,0,0,0,0,0,0,0,0],
+ [0,0,3,6,0,0,0,0,0],
+ [0,7,0,0,9,0,2,0,0],
+ [0,5,0,0,0,7,0,0,0],
+ [0,0,0,0,4,5,7,0,0],
+ [0,0,0,1,0,0,0,3,0],
+ [0,0,1,0,0,0,0,6,8],
+ [0,0,8,5,0,0,0,1,0],
+ [0,9,0,0,0,0,4,0,0]],
+        }),
+        mounted() {
+            [this.app, this.sprite] = this.init_pixi();
+            this.info = 'Ready'
+        },
+        methods: {
+            load_sudo() {
+var style = new PIXI.TextStyle({
+    fontFamily: 'Consolas',
+    fontSize: 48,
+    {#fontStyle: 'italic',#}
+    fontWeight: 'bold',
+    fill: ['#ffffff', '#00ff99'], // gradient
+    stroke: '#4a1850',
+    strokeThickness: 5,
+    dropShadow: true,
+    dropShadowColor: '#000000',
+    dropShadowBlur: 4,
+    dropShadowAngle: Math.PI / 6,
+    dropShadowDistance: 6,
+    {#wordWrap: true,#}
+    {#wordWrapWidth: 440#}
+});
+let sudotext = '', line = 0
+                let r_padding = (this.appWidth-40*2)/9
+                this.puzzle.forEach((r, ind, arrary) => {
+                    for (let c=0;c<10;c++){
+                        sudotext = r[c]
+                        if (c%3==0) line = 20
+                        else line = 0
+                        if (sudotext != 0) {
+                            let richText = new PIXI.Text(sudotext, style);
+                            richText.x = 40 + c * r_padding;
+                            richText.y = 0 + ind * r_padding;
+                            this.app.stage.addChild(richText);
+                        }
+                    }
+                } )
+
+
+            },
+            reset_pixi() {
+                [this.app, this.sprite] = this.init_pixi()
+                this.info = 'Reset OK'
+            },
+            click_bunny() {
+                this.sprite.scale.x *= 1.25;
+                this.info = 'Bunny clicked'
+            },
+            init_pixi() {
+                let app_e = document.getElementById('pixi')
+                app_e.innerHTML=""
+                this.appWidth = Math.min(700, app_e.offsetWidth)
+                let app = new PIXI.Application(this.appWidth, this.appWidth/4*3,{backgroundColor: 0x1099bb });
+                app_e.appendChild(app.view);
+
+// Scale mode for all textures, will retain pixelation
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+var background = new PIXI.Sprite.fromImage('/static/tile.png');
+background.width = 800;
+background.height = 600;
+app.stage.addChild(background);
+
+// draw grid
+let graphics = new PIXI.Graphics();
+graphics.lineStyle(2, 0x808020, 1);
+graphics.beginFill(0xFF700B, 0.1);
+let r_padding = (this.appWidth/4*3)/12
+graphics.drawRect(40, 20, 40+r_padding*3, 20+r_padding*3);
+graphics.drawRect(40, 20+r_padding*6, 40+r_padding*3, 20+r_padding*8);
+graphics.endFill();
+app.stage.addChild(graphics);
+
+let sprite = PIXI.Sprite.fromImage('/static/bunny.png');
+
+// Set the initial position
+sprite.anchor.set(0.5);
+sprite.x = app.screen.width / 2;
+sprite.y = app.screen.height / 2;
+
+// Opt-in to interactivity
+sprite.interactive = true;
+
+// Shows hand cursor
+sprite.buttonMode = true;
+
+// Pointers normalize touch and mouse
+sprite.on('pointerdown', onClick);
+
+// Alternatively, use the mouse & touch events:
+// sprite.on('click', onClick); // mouse-only
+// sprite.on('tap', onClick); // touch-only
+
+app.stage.addChild(sprite);
+
+function onClick () {
+    sprite.scale.x *= 1.25;
+    sprite.scale.y *= 1.25;
+}
+return [app, sprite]
+            },
+            reset_table() {
+                this.items.splice(0) // splice will trigger vue refresh
+                return axios.get('/reset')
+                    .then((response) => {
+                        console.log('reset success')
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
+            },
+        },
+    })
+    </script>
+</body>
+
+</html>

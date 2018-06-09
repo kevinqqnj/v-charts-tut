@@ -5,9 +5,15 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return '<h1>my Tutorial of V-charts and D3</h1><br><br>' \
-           '<a href="/vc/b">v-charts</a><br>' \
-           '<a href="/d3/a">D3 - a</a>'
+    return render_template('sudoku.html')
+    # return '<h1>my Tutorial of V-charts and D3</h1><br><br>' \
+    #        '<a href="/pixi/a">PIXIJS - demo</a><br>' \
+    #        '<a href="/vc/b">v-charts</a><br>' \
+    #        '<a href="/d3/a">D3 - demo</a>'
+
+@app.route('/pixi/<string:chapter>')
+def pixi(chapter):
+    return render_template(f'pixi-{chapter}.html')
 
 @app.route('/vc/<string:chapter>')
 def vcharts(chapter):
